@@ -8,7 +8,7 @@
 
 如下图所示，点击左侧边栏的 Tokens，然后开始创建一个 token。
 
-![img](E:\03-GitHub\GitHub-Random-Star\README.assets\image-29-17070323080313.png)
+![img](https://raw.githubusercontent.com/mewhz/GitHub-Random-Star/main/README.assets/image-28.png)
 
 初次设置可能需要你验证，这里可以选择以密码的形式进行安全验证。
 
