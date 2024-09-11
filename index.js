@@ -5,7 +5,7 @@
 // @description  随机展示自己 star 的仓库
 // @author       mewhz
 // @match        https://github.com/*?tab=stars
-// @icon         data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==
+// @icon         https://github.githubassets.com/favicons/favicon.svg
 // @grant        GM_xmlhttpRequest
 // @connect      api.github.com
 // ==/UserScript==
@@ -38,15 +38,20 @@
         let stargazers_count = json["stargazers_count"];
         let forks_count = json["forks_count"];
 
-        if (description === null ) description = "";
-        if (language === null ) language = "";
+        let pushed_at = timeFormat(json["pushed_at"]);
 
-        console.log(description.length);
+        if (description === null ) description = "";
+        if (language !== null ) language = `语言: <strong>${language}</strong>`;
+        if (language === null)  language = "";
 
         if (description.length > descriptionMax) description = description.slice(0, descriptionMax) + "...";
 
         let div = document.createElement("div");
         let divBorder = document.createElement("div");
+
+        div.className = "card";
+
+        console.log(language);
 
         divBorder.innerHTML = `
             <div class="border-bottom">
@@ -59,10 +64,11 @@
                 </h3>
                 <p>${description}</p>
                 <p>
-                    language: <strong>${language}</strong> 
-                    stars: <strong>${stargazers_count}</strong> 
+                    ${language}
+                    stars: <strong>${stargazers_count}</strong>
                     fork: <strong>${forks_count}</strong>
-                    starred: <strong>${starred_at}</strong>
+                    收藏时间: <strong>${starred_at}</strong>
+                    更新时间: <strong>${pushed_at}</strong>
                 </p>
             </div>`;
 
@@ -89,14 +95,12 @@
         let month = ("0" + (date.getMonth() + 1)).slice(-2); // 获取月份，月份需要加 1，并且补零到两位数
         let day = ("0" + date.getDate()).slice(-2); // 获取日期，补零到两位数
 
-        let daysOfWeek = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
-        let dayOfWeek = daysOfWeek[date.getDay()]; // 获取星期几
 
         let hours = ("0" + date.getHours()).slice(-2); // 获取小时，补零到两位数
         let minutes = ("0" + date.getMinutes()).slice(-2); // 获取分钟，补零到两位数
         let seconds = ("0" + date.getSeconds()).slice(-2); // 获取秒数，补零到两位数
 
-        let starred_at = year + "-" + month + "-" + day + " " + dayOfWeek + " " + hours + ":" + minutes + ":" + seconds;
+        let starred_at = year + "-" + month + "-" + day + " " + " " + hours + ":" + minutes + ":" + seconds;
 
         return starred_at;
 
@@ -104,7 +108,7 @@
 
     // 获取 star 数量
     function getStarSize(headers) {
-        
+
         let regex = /<[^>]*\?page=(\d+)[^>]*>; rel="last"/;
         let matches = headers.match(regex);
 
@@ -113,8 +117,6 @@
             starSize = matches[1];
 
         }
-
-        console.log(starSize);
 
     }
 
@@ -161,11 +163,37 @@
 
         let div = document.createElement("div");
 
-        div.innerHTML = `<div><h2 class="f3-light mb-n1">Random Stars 我收藏 ≠ 我会看</h2></div>`;
+        div.style = 'margin-bottom: 5px; display: flex';
+
+        div.innerHTML =
+        `
+            <h2 class="f3-light mb-n1">Random Stars 我收藏 ≠ 我会看</h2>
+            <a id="refresh" style="font-size: 20px;margin-left: 10px;cursor: pointer;">刷新</a>
+        `;
+
+        div.onclick = (event) => {
+
+            if (event.target.id == "refresh") {
+
+                remove();
+
+                insert();
+
+            }
+        };
 
         doc.parentElement.insertBefore(div, doc);
 
+        insert();
+
+    }
+
+    function insert() {
+
+        set.clear();
+
         while (set.size != randomSize) {
+
             let value = randomInt(0, starSize);
 
             if (!set.has(value)) {
@@ -177,6 +205,17 @@
             }
 
         }
+
+    }
+
+    function remove() {
+
+        let card = doc.parentElement.getElementsByClassName("card");
+
+        let len = card.length;
+
+        for (let i = 0; i < len; i++) card[0].remove();
+
     }
 
     init();
