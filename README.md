@@ -2,7 +2,7 @@
 
 ### 使用方法
 
-注册并登录 Github 后，点击**“右上角头像->Settings”**，进入用户设置界面。
+注册并登录 Github 后，点击 **右上角头像->Settings**，进入用户设置界面。
 
 ![img](https://raw.githubusercontent.com/mewhz/GitHub-Random-Star/main/README.assets/image-27.png)
 
