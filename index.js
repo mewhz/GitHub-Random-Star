@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         GitHub Random Star
 // @namespace    http://tampermonkey.net/
-// @version      1.0.0
+// @version      1.1.0
 // @description  随机展示自己 star 的仓库
 // @author       mewhz
 // @match        https://github.com/*?tab=stars
@@ -28,6 +28,35 @@
 
     let doc = document.querySelector("#user-profile-frame > div > div.my-3.d-flex.flex-justify-between.flex-items-center");
 
+    // 添加样式
+    function addStyles() {
+        const style = document.createElement('style');
+        style.textContent = `
+            .cards-container {
+                overflow: hidden;
+                max-height: 0;
+                opacity: 0;
+                transition: max-height 0.6s ease-in-out, opacity 0.5s ease-in-out;
+            }
+            .cards-container.expanded {
+                max-height: 3000px;
+                opacity: 1;
+            }
+            .toggle-btn {
+                cursor: pointer;
+                color: #0366d6;
+                font-size: 20px;
+                margin-left: 10px;
+                user-select: none;
+                display: inline-block;
+            }
+            .toggle-btn:hover {
+                text-decoration: underline;
+            }
+        `;
+        document.head.appendChild(style);
+    }
+
     // 在页面中创建元素
     function createdElements(json, starred_at) {
 
@@ -40,9 +69,9 @@
 
         let pushed_at = timeFormat(json["pushed_at"]);
 
-        if (description === null ) description = "";
-        if (language !== null ) language = `语言: <strong>${language}</strong>`;
-        if (language === null)  language = "";
+        if (description === null) description = "";
+        if (language !== null) language = `语言: <strong>${language}</strong>`;
+        if (language === null) language = "";
 
         if (description.length > descriptionMax) description = description.slice(0, descriptionMax) + "...";
 
@@ -70,12 +99,13 @@
                     收藏时间: <strong>${starred_at}</strong>
                     更新时间: <strong>${pushed_at}</strong>
                 </p>
-            </div>`;
+            </div>
+                 `;
 
         div.appendChild(divBorder);
 
-        doc.parentElement.insertBefore(div, doc);
-
+        // 将卡片添加到容器中
+        document.getElementById('cards-container').appendChild(div);
     }
 
     // 获取随机值
@@ -155,67 +185,82 @@
     }
 
     async function init() {
+        // 添加样式
+        addStyles();
+        
         await request(1, 1, true);
 
         if (starSize < 1) return;
 
-        if (starSize < randomSize)  randomSize = starSize;
+        if (starSize < randomSize) randomSize = starSize;
 
         let div = document.createElement("div");
 
         div.style = 'margin-bottom: 5px; display: flex';
 
-        div.innerHTML =
-        `
+        div.innerHTML = `
             <h2 class="f3-light mb-n1">Random Stars 我收藏 ≠ 我会看</h2>
             <a id="refresh" style="font-size: 20px;margin-left: 10px;cursor: pointer;">刷新</a>
+            <div class="toggle-btn">展开</div>
         `;
 
+        // 创建卡片容器
+        let cardsContainer = document.createElement("div");
+        cardsContainer.id = "cards-container";
+        cardsContainer.className = "cards-container";
+        
+        // 将标题和卡片容器添加到页面
+        doc.parentElement.insertBefore(div, doc);
+        doc.parentElement.insertBefore(cardsContainer, doc);
+        
+        // 添加展开/关闭功能
+        const toggleBtn = div.querySelector('.toggle-btn');
+        toggleBtn.addEventListener('click', function () {
+            const container = document.getElementById('cards-container');
+            const isExpanded = container.classList.contains('expanded');
+            
+            // 切换容器的展开状态
+            container.classList.toggle('expanded');
+            
+            // 更新按钮文本
+            toggleBtn.textContent = isExpanded ? '展开' : '关闭';
+        });
+
         div.onclick = (event) => {
-
             if (event.target.id == "refresh") {
-
                 remove();
-
                 insert();
-
+                
+                // 刷新后保持当前的展开/关闭状态
+                const container = document.getElementById('cards-container');
+                const isExpanded = container.classList.contains('expanded');
+                if (isExpanded) {
+                    container.classList.add('expanded');
+                    toggleBtn.textContent = '关闭';
+                }
             }
         };
-
-        doc.parentElement.insertBefore(div, doc);
 
         insert();
 
     }
 
     function insert() {
-
         set.clear();
 
         while (set.size != randomSize) {
-
             let value = randomInt(0, starSize);
 
             if (!set.has(value)) {
-
                 set.add(value);
-
                 request(value, 1, false);
-
             }
-
         }
-
     }
 
     function remove() {
-
-        let card = doc.parentElement.getElementsByClassName("card");
-
-        let len = card.length;
-
-        for (let i = 0; i < len; i++) card[0].remove();
-
+        const container = document.getElementById('cards-container');
+        container.innerHTML = '';
     }
 
     init();
